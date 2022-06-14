@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -8,37 +9,35 @@ using CsTsSModelConverter.Helper;
 using CsTsSModelConverter.Options;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using YamlDotNet.Serialization.NamingConventions;
 
 namespace CsTsSModelConverter
 {
     public static class CsTsModelConverter
     {
+        private static CsTsModelConverterOptions Options { get; set; } = new();
         public static void GenerateCode(Action<CsTsModelConverterOptions> configure)
         {
             var options = new CsTsModelConverterOptions();
-            configure?.Invoke(options);
+            configure(options);
+            Options = options;
 
-            if (options.SourcePath == null)
+            if (!Options.SourcePath.EndsWith("\\"))
             {
-                return;
+                Options.SourcePath += "\\";
             }
 
-            if (!options.SourcePath.EndsWith("\\"))
+            if (!Options.DestinationPath.EndsWith("\\"))
             {
-                options.SourcePath += "\\";
-            }
-            if (!options.DestinationPath.EndsWith("\\"))
-            {
-                options.DestinationPath += "\\";
+                Options.DestinationPath += "\\";
             }
 
-            var ignoreFileOptions = options.IgnoreFilePath != null ? ParseIgnoreFileOptions(options) : new IgnoreFileOptions();
-
+            var sw = new Stopwatch();
+            sw.Start();
+            
             var sourceFiles = Directory.GetFiles(options.SourcePath, "*.cs", SearchOption.AllDirectories);
             var tsFiles = new List<TypescriptFile>();
-            
-            Parallel.ForEach(sourceFiles, sourceFile =>
+
+            Parallel.ForEach(sourceFiles, sourceFile => 
             //foreach (var sourceFile in sourceFiles)
             {
                 var tree = CSharpSyntaxTree.ParseText(File.ReadAllText(sourceFile));
@@ -46,10 +45,10 @@ namespace CsTsSModelConverter
                 var tsFile = new TypescriptFile
                 {
                     Name = DirectoryHelper.GetFileName(sourceFile),
-                    RelativePath = DirectoryHelper.GetMiddlePath(sourceFile, options.SourcePath),
-                    Ignored = ignoreFileOptions.SourceFiles.Contains(sourceFile)
+                    RelativePath = DirectoryHelper.GetMiddlePath(sourceFile, Options.SourcePath)
                 };
-                tsFile.FullPath = $"{options.DestinationPath}{tsFile.RelativePath}";
+                
+                tsFile.FullPath = $"{Options.DestinationPath}{tsFile.RelativePath}";
                 if (!tsFile.FullPath.EndsWith("\\")) tsFile.FullPath = $"{tsFile.FullPath}\\";
                 tsFile.FullPath = $"{tsFile.FullPath}{tsFile.Name}.ts";
 
@@ -61,9 +60,9 @@ namespace CsTsSModelConverter
                         {
                             tsFile.Members.Add(member switch
                             {
-                                ClassDeclarationSyntax mClass => CreateInterface(mClass, tsFile, options),
-                                EnumDeclarationSyntax mEnum => CreateEnum(mEnum, options),
-                                _ => null
+                                ClassDeclarationSyntax mClass => CreateInterface(mClass, tsFile),
+                                EnumDeclarationSyntax mEnum => CreateEnum(mEnum),
+                                _ => throw new ArgumentException()
                             });
                         }
                     }
@@ -74,45 +73,14 @@ namespace CsTsSModelConverter
             //}
 
             UpdateImports(tsFiles);
-            DirectoryHelper.WriteToFile(options.DestinationPath, tsFiles
-                    .Where(f => !f.Ignored && !ignoreFileOptions.DestinationFiles.Contains(f.FullPath)));
-
-            if (!options.Cleanup) return;
+            DirectoryHelper.WriteToFile(Options.DestinationPath, tsFiles
+                .Where(f => !f.Ignored));
             
-            var filesToIgnore = ignoreFileOptions.DestinationFiles
-                    .Concat(tsFiles.Where(f => !f.Ignored).Select(f => f.FullPath)).ToList();
-                
-            DirectoryHelper.Cleanup(options.DestinationPath, options.DestinationPath, filesToIgnore);
+            sw.Stop();
+            Console.WriteLine($"Time: {sw.ElapsedMilliseconds}ms = {sw.ElapsedMilliseconds / 1000}s");
         }
 
-        private static IgnoreFileOptions ParseIgnoreFileOptions(CsTsModelConverterOptions options)
-        {
-            var deserializer = new YamlDotNet.Serialization.DeserializerBuilder()
-                .WithNamingConvention(CamelCaseNamingConvention.Instance)
-                .Build();
-            var ignoreFileOptions = deserializer.Deserialize<IgnoreFileOptions>(File.ReadAllText(options.IgnoreFilePath))
-                ?? new IgnoreFileOptions();
-                
-            ignoreFileOptions.SourceFiles = ignoreFileOptions.SourceFiles?.Select(f =>
-            {
-                var newF = f.Replace("/", "\\");
-                if (newF.StartsWith("\\")) newF = newF.Substring(1);
-                if (!newF.EndsWith(".cs")) newF = $"{newF}.cs";
-                return $"{options.SourcePath}{newF}";
-            }).ToList() ?? new List<string>();
-
-            ignoreFileOptions.DestinationFiles = ignoreFileOptions.DestinationFiles?.Select(f =>
-            {
-                var newF = f.Replace("/", "\\");
-                if (newF.StartsWith("\\")) newF = newF.Substring(1);
-                return $"{options.DestinationPath}{newF}";
-            }).ToList() ?? new List<string>();
-
-            return ignoreFileOptions;
-        }
-
-        private static TypescriptInterface CreateInterface(TypeDeclarationSyntax mClass, TypescriptFile tsFile, 
-            CsTsModelConverterOptions options)
+        private static TypescriptInterface CreateInterface(TypeDeclarationSyntax mClass, TypescriptFile tsFile)
         {
             var baseType = (mClass.BaseList?.Types.FirstOrDefault()?.Type as IdentifierNameSyntax)?.Identifier.Text;
             if (baseType is not null && !tsFile.PossibleImports.Contains(baseType))
@@ -123,27 +91,25 @@ namespace CsTsSModelConverter
             var tsInterface = new TypescriptInterface
             {
                 Name = mClass.Identifier.Text,
-                Indent = options.Indent,
-                Parameters =
+                Indent = Options.Indent,
+                Generics =
                     mClass.TypeParameterList?.Parameters.Select(p => p.Identifier.Text).ToList() ??
                     new List<string>(),
                 Base = baseType
             };
-
+            
             foreach (var field in mClass.Members)
             {
                 if (field is PropertyDeclarationSyntax property)
                 {
-                    tsInterface.Properties.Add(CreateProperty(property, options, tsFile,
-                        tsInterface.Parameters));
+                    tsInterface.Properties.Add(CreateProperty(property, tsFile, tsInterface.Generics));
                 }
             }
 
             return tsInterface;
         }
         
-        private static TypescriptProperty CreateProperty(PropertyDeclarationSyntax syntax, CsTsModelConverterOptions options,
-            TypescriptFile tsFile, ICollection<string> generics)
+        private static TypescriptProperty CreateProperty(PropertyDeclarationSyntax syntax, TypescriptFile tsFile, List<string> generics)
         {
             var name = syntax.Identifier.Text;
             var accessors = syntax.AccessorList?.Accessors;
@@ -151,19 +117,19 @@ namespace CsTsSModelConverter
             {
                 Name = string.Concat(name[0].ToString().ToLower(), name.Substring(1)),
                 Readonly = (accessors?.All(a => a.Keyword.Text != "set") ?? true) 
-                           || (accessors.Value.Any(a => a.Modifiers.Any(m => m.Text == "private"))),
-                Type = TypeHelper.ParseType(syntax.Type, options, tsFile, generics)
+                           || accessors.Value.Any(a => a.Modifiers.Any(m => m.Text == "private")),
+                Type = TypeHelper.ParseType(syntax.Type, tsFile, generics)
             };
             
             return property;
         }
 
-        private static TypescriptEnum CreateEnum(EnumDeclarationSyntax mEnum, CsTsModelConverterOptions options)
+        private static TypescriptEnum CreateEnum(EnumDeclarationSyntax mEnum)
         {
             var tsEnum = new TypescriptEnum
             {
                 Name = mEnum.Identifier.Text,
-                Indent = options.Indent
+                Indent = Options.Indent
             };
 
             foreach (var enumField in mEnum.Members)

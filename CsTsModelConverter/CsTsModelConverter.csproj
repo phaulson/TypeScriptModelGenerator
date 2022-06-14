@@ -86,11 +86,10 @@
     <ItemGroup>
         <Compile Include="Helper\DirectoryHelper.cs" />
         <Compile Include="Helper\TypeHelper.cs" />
-        <Compile Include="Options\IgnoreFileOptions.cs" />
         <Compile Include="Options\CsTsModelConverterOptions.cs" />
         <Compile Include="CsTsModelConverter.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
-        <Compile Include="Data\Transpilable.cs" />
+        <Compile Include="Data\TypescriptConvertible.cs" />
         <Compile Include="Data\TypescriptEnum.cs" />
         <Compile Include="Data\TypescriptFile.cs" />
         <Compile Include="Data\TypescriptInterface.cs" />

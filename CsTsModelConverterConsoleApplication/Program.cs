@@ -5,14 +5,11 @@ namespace CsTsModelConverterConsoleApplication
 {
     public static class Program
     {
-        public static void Main(string[] args)
+        public static void Main()
         {
             CsTsModelConverter.GenerateCode(options =>
             {
                 options.IndentType = IndentType.TwoSpaces;
-                options.NullableCollections = false;
-                options.NullableObjects = false;
-                options.NullableStrings = false;
                 options.SourcePath = @"..\..\Input";
                 options.DestinationPath = @"..\..\Output";
             });

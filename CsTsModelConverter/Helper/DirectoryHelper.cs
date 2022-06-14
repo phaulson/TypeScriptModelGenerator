@@ -66,19 +66,19 @@ namespace CsTsSModelConverter.Helper
             });
         }
 
-        public static void Cleanup(string parentDirectory, string sourcePath, List<string> filesToIgnore)
-        {
-            Parallel.ForEach(Directory.GetDirectories(parentDirectory), directory =>
-            {
-                Cleanup(directory, sourcePath, filesToIgnore);
-                Parallel.ForEach(Directory.EnumerateFiles(directory, "*.*", SearchOption.TopDirectoryOnly)
-                    .Where(f => !filesToIgnore.Contains(f)), File.Delete);
-                
-                if (!Directory.EnumerateFileSystemEntries(directory).Any()) Directory.Delete(directory, false);
-            });
-            
-            Parallel.ForEach(Directory.EnumerateFiles(parentDirectory, "*.*", SearchOption.TopDirectoryOnly)
-                .Where(f => !filesToIgnore.Contains(f)), File.Delete);
-        }
+        // public static void Cleanup(string parentDirectory, string sourcePath, List<string> filesToIgnore)
+        // {
+        //     Parallel.ForEach(Directory.GetDirectories(parentDirectory), directory =>
+        //     {
+        //         Cleanup(directory, sourcePath, filesToIgnore);
+        //         Parallel.ForEach(Directory.EnumerateFiles(directory, "*.*", SearchOption.TopDirectoryOnly)
+        //             .Where(f => !filesToIgnore.Contains(f)), File.Delete);
+        //         
+        //         if (!Directory.EnumerateFileSystemEntries(directory).Any()) Directory.Delete(directory, false);
+        //     });
+        //     
+        //     Parallel.ForEach(Directory.EnumerateFiles(parentDirectory, "*.*", SearchOption.TopDirectoryOnly)
+        //         .Where(f => !filesToIgnore.Contains(f)), File.Delete);
+        // }
     }
 }

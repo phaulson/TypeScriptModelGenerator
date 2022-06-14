@@ -1,65 +1,52 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using CsTsSModelConverter.Data;
-using CsTsSModelConverter.Options;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace CsTsSModelConverter.Helper
 {
     public static class TypeHelper
     {
-        private static readonly CsTsModelConverterOptions DefaultOptions = new()
+        private static TypescriptFile TsFile { get; set; } = new();
+        private static List<string> Generics { get; set; } = new();
+        
+        public static string ParseType(TypeSyntax type, TypescriptFile tsFile, List<string> generics)
         {
-            NullableStrings = false,
-            NullableObjects = false,
-            NullableCollections = false
-        };
-
-        public static string ParseType(TypeSyntax type, CsTsModelConverterOptions options, TypescriptFile tsFile, 
-            ICollection<string> generics)
-        {
-            return ParseTypeInternal(type, tsFile, generics, options, false);
+            TsFile = tsFile;
+            Generics = generics;
+            
+            return ParseTypeInternal(type, false);
         }
 
-        private static string ParseTypeInternal(TypeSyntax type, TypescriptFile tsFile, ICollection<string> generics, 
-            CsTsModelConverterOptions options = null, bool inner = true)
+        private static string ParseTypeInternal(TypeSyntax type, bool inner = true)
         {
             return type switch
             {
-                PredefinedTypeSyntax syntax => ParsePredefinedType(syntax, (options ?? DefaultOptions).NullableStrings),
-                NullableTypeSyntax syntax => ParseNullableType(syntax, tsFile, generics, inner),
-                IdentifierNameSyntax syntax => ParseIdentifierType(syntax, tsFile, generics, 
-                    (options ?? DefaultOptions).NullableObjects),
-                ArrayTypeSyntax syntax => ParseArrayType(syntax, tsFile, generics, 
-                    (options ?? DefaultOptions).NullableCollections),
-                GenericNameSyntax syntax => ParseGenericType(syntax, tsFile, generics, 
-                    (options ?? DefaultOptions).NullableCollections),
+                PredefinedTypeSyntax syntax => ParsePredefinedType(syntax),
+                NullableTypeSyntax syntax => ParseNullableType(syntax, inner),
+                IdentifierNameSyntax syntax => ParseIdentifierType(syntax),
+                ArrayTypeSyntax syntax => ParseArrayType(syntax),
+                GenericNameSyntax syntax => ParseGenericType(syntax),
                 _ => ""
             };
         }
 
-        private static string ParsePredefinedType(PredefinedTypeSyntax syntax, bool nullableStrings)
+        private static string ParsePredefinedType(PredefinedTypeSyntax syntax)
         {
             var type = syntax.Keyword.Text switch
             {
-                "int" or "double" or "decimal" or "float" => "number",
+                "int" or "double" or "decimal" or "float" or "short" or "byte" => "number",
                 "string" => "string",
                 "bool" => "boolean",
                 _ => "any"
             };
 
-            if (nullableStrings && type == "string")
-            {
-                type += " | null";
-            }
-
             return type;
         }
         
-        private static string ParseNullableType(NullableTypeSyntax syntax, TypescriptFile tsFile, 
-            ICollection<string> generics, bool inner)
+        private static string ParseNullableType(NullableTypeSyntax syntax, bool inner)
         {
-            var type = ParseTypeInternal(syntax.ElementType, tsFile, generics);
+            var type = ParseTypeInternal(syntax.ElementType);
             type += " | null";
 
             if (inner)
@@ -70,68 +57,57 @@ namespace CsTsSModelConverter.Helper
             return type;
         }
         
-        private static string ParseIdentifierType(SimpleNameSyntax syntax, TypescriptFile tsFile, 
-            ICollection<string> generics, bool nullableObjects)
+        private static string ParseIdentifierType(SimpleNameSyntax syntax)
         {
             var identifier = syntax.Identifier.Text;
             var type = identifier is "DateTime" or "DateTimeOffset" ? "Date" : identifier;
 
-            if (type == "Date" || (generics?.Contains(type) ?? false)) return type;
+            if (type == "Date" || Generics.Contains(type)) return type;
             
-            if (!tsFile.PossibleImports.Contains(type))
+            if (!TsFile.PossibleImports.Contains(type))
             {
-                tsFile.PossibleImports.Add(type);
-            }
-            if (nullableObjects)
-            {
-                type += " | null";
+                TsFile.PossibleImports.Add(type);
             }
 
             return type;
         }
         
-        private static string ParseArrayType(ArrayTypeSyntax syntax, TypescriptFile tsFile, 
-            ICollection<string> generics, bool nullableCollections)
+        private static string ParseArrayType(ArrayTypeSyntax syntax)
         {
-            var type = ParseTypeInternal(syntax.ElementType, tsFile, generics);
+            if (syntax.ElementType is PredefinedTypeSyntax {Keyword: {Text: "byte"}})
+            {
+                return "string";
+            }
+            
+            var type = ParseTypeInternal(syntax.ElementType);
             type += "[]";
 
-            if (nullableCollections)
-            {
-                type += " | null";
-            }
-
             return type;
         }
-        
-        private static string ParseGenericType(GenericNameSyntax syntax, TypescriptFile tsFile, 
-            ICollection<string> generics, bool nullableCollections)
+
+        private static string ParseGenericType(GenericNameSyntax syntax)
         {
             var identifier = syntax.Identifier.Text;
             var arguments = syntax.TypeArgumentList.Arguments;
-            
+
             string type;
             switch (identifier)
             {
                 case "List":
-                    type = ParseTypeInternal(arguments[0], tsFile, generics);
+                    type = ParseTypeInternal(arguments[0]);
                     type += "[]";
                     break;
                 case "Dictionary":
-                    type = $"{{ [key: string]: {ParseTypeInternal(arguments[1], tsFile, generics)} }}";
+                    type = $"Map<{ParseTypeInternal(arguments[0])}, {ParseTypeInternal(arguments[1])}>";
                     break;
                 default:
-                    type = $"{identifier}<{string.Join(", ", arguments.Select(a => ParseTypeInternal(a, tsFile, generics)))}>";
-                    if (!tsFile.PossibleImports.Contains(identifier))
+                    type = $"{identifier}<{string.Join(", ", arguments.Select(a => ParseTypeInternal(a)))}>";
+                    if (!TsFile.PossibleImports.Contains(identifier))
                     {
-                        tsFile.PossibleImports.Add(identifier);
+                        TsFile.PossibleImports.Add(identifier);
                     }
-                    break;
-            }
 
-            if (nullableCollections)
-            {
-                type += " | null";
+                    break;
             }
 
             return type;
