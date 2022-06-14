@@ -100,7 +100,7 @@
       </ProjectReference>
     </ItemGroup>
     <ItemGroup>
-      <Folder Include="Output" />
+      <Content Include="Output\.gitkeep" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
     <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
