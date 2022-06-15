@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using CsTsSModelConverter.Data;
+using CSharpTypescriptConverter.Data;
 
-namespace CsTsSModelConverter.Helper
+namespace CSharpTypescriptConverter.Helper
 {
     public static class DirectoryHelper
     {
@@ -52,7 +52,7 @@ namespace CsTsSModelConverter.Helper
             return complete;
         }
 
-        public static void WriteToFile(string path, IEnumerable<TypescriptFile> tsFiles)
+        public static void WriteToFile(string path, IEnumerable<TypeScriptFile> tsFiles)
         {
             Parallel.ForEach(tsFiles, tsFile =>
             {

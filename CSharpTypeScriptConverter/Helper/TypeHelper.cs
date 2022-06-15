@@ -1,24 +1,33 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using CsTsSModelConverter.Data;
+using CSharpTypescriptConverter.Data;
+using CSharpTypescriptConverter.Options;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace CsTsSModelConverter.Helper
+namespace CSharpTypescriptConverter.Helper
 {
-    public static class TypeHelper
+    public class TypeHelper
     {
-        private static TypescriptFile TsFile { get; set; } = new();
-        private static List<string> Generics { get; set; } = new();
+        private readonly List<string> _possibleImports = new();
+        private bool _optional;
+        private TypeScriptGeneratorOptions _options = new();
         
-        public static string ParseType(TypeSyntax type, TypescriptFile tsFile, List<string> generics)
+        public TypeInformation ParseType(TypeSyntax type, TypeScriptGeneratorOptions options)
         {
-            TsFile = tsFile;
-            Generics = generics;
+            _possibleImports.Clear();
+            _optional = false;
+            _options = options;
             
-            return ParseTypeInternal(type, false);
+            var typeString = ParseTypeInternal(type, false);
+            return new TypeInformation
+            {
+                Name = typeString,
+                Optional = _optional,
+                PossibleImports = _possibleImports
+            };
         }
 
-        private static string ParseTypeInternal(TypeSyntax type, bool inner = true)
+        private string ParseTypeInternal(TypeSyntax type, bool inner = true)
         {
             return type switch
             {
@@ -31,7 +40,7 @@ namespace CsTsSModelConverter.Helper
             };
         }
 
-        private static string ParsePredefinedType(PredefinedTypeSyntax syntax)
+        private string ParsePredefinedType(PredefinedTypeSyntax syntax)
         {
             var type = syntax.Keyword.Text switch
             {
@@ -44,35 +53,44 @@ namespace CsTsSModelConverter.Helper
             return type;
         }
         
-        private static string ParseNullableType(NullableTypeSyntax syntax, bool inner)
+        private string ParseNullableType(NullableTypeSyntax syntax, bool inner)
         {
             var type = ParseTypeInternal(syntax.ElementType);
-            type += " | null";
-
             if (inner)
             {
-                type = $"({type})";
+                type = $"({type} | {(_options.NestedNullableConvert == NestedNullableConvert.Null ? "null" : "undefined")})";
+            }
+            else
+            {
+                if (_options.NullableConvert == NullableConvert.Optional)
+                {
+                    _optional = true;
+                }
+                else
+                {
+                    type += $" | {(_options.NullableConvert == NullableConvert.Null ? "null" : "undefined")}";
+                }
             }
             
             return type;
         }
         
-        private static string ParseIdentifierType(SimpleNameSyntax syntax)
+        private string ParseIdentifierType(SimpleNameSyntax syntax)
         {
             var identifier = syntax.Identifier.Text;
             var type = identifier is "DateTime" or "DateTimeOffset" ? "Date" : identifier;
 
-            if (type == "Date" || Generics.Contains(type)) return type;
+            if (type == "Date") return type;
             
-            if (!TsFile.PossibleImports.Contains(type))
+            if (!_possibleImports.Contains(type))
             {
-                TsFile.PossibleImports.Add(type);
+                _possibleImports.Add(type);
             }
 
             return type;
         }
         
-        private static string ParseArrayType(ArrayTypeSyntax syntax)
+        private string ParseArrayType(ArrayTypeSyntax syntax)
         {
             if (syntax.ElementType is PredefinedTypeSyntax {Keyword: {Text: "byte"}})
             {
@@ -85,7 +103,7 @@ namespace CsTsSModelConverter.Helper
             return type;
         }
 
-        private static string ParseGenericType(GenericNameSyntax syntax)
+        private string ParseGenericType(GenericNameSyntax syntax)
         {
             var identifier = syntax.Identifier.Text;
             var arguments = syntax.TypeArgumentList.Arguments;
@@ -102,9 +120,9 @@ namespace CsTsSModelConverter.Helper
                     break;
                 default:
                     type = $"{identifier}<{string.Join(", ", arguments.Select(a => ParseTypeInternal(a)))}>";
-                    if (!TsFile.PossibleImports.Contains(identifier))
+                    if (!_possibleImports.Contains(identifier))
                     {
-                        TsFile.PossibleImports.Add(identifier);
+                        _possibleImports.Add(identifier);
                     }
 
                     break;

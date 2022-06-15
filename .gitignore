@@ -3,5 +3,5 @@ packages/
 bin/
 obj/
 
-CsTsModelConverterConsoleApplication/Output/*
-!CsTsModelConverterConsoleApplication/Output/.gitkeep
+CSharpTypeScriptConverterConsoleApplication/Output/*
+!CSharpTypeScriptConverterConsoleApplication/Output/.gitkeep

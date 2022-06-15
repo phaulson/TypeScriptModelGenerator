@@ -4,11 +4,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("CsTsModelConverter")]
+[assembly: AssemblyTitle("CSharpTypeScriptConverterConsoleApplication")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("CsTsModelConverter")]
+[assembly: AssemblyProduct("CSharpTypeScriptConverterConsoleApplication")]
 [assembly: AssemblyCopyright("Copyright ©  2022")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -19,7 +19,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("10C5BB83-C1F4-4201-88BD-DE505279D45D")]
+[assembly: Guid("1A4A7A29-6F01-4CFA-A8ED-48649366D010")]
 
 // Version information for an assembly consists of the following four values:
 //
