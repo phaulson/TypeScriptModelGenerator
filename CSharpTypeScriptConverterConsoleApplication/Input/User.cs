@@ -1,11 +1,22 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using CSharpTypescriptConverter.Attributes;
 
-namespace CSharpTypeScriptConverterConsoleApplication.Input
+[assembly: TypeScriptModel(Name = "IUser")]
+
+namespace CSharpTypeScriptConverterConsoleApplication.Input;
+
+[TypeScriptModel(Name = "IUser")]
+public class User
 {
-    public class User
-    {
-        public string Name { get; set; }
-        public int Age { get; set; }
-        public List<string> Tags { get; set; }
-    }
+    public int Age { get; set; }
+    public IEnumerable<string> Tags { get; set; }
+        
+    [TypeScriptModel]
+    public IDictionary<string, List<int>> Tags2 { get; set; }
+        
+    [TypeScriptModel(Name = "Hello")]
+    public (int, string, bool, string, byte) Test { get; set; }
+    
+    public DateTime DateLol { get; set; }
 }

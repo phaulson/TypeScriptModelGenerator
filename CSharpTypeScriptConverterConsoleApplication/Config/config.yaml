@@ -1,0 +1,8 @@
+﻿IndentType: TwoSpaces
+SourceDirectory: ..\..\Input
+DestinationDirectory: ..\..\Output
+AdditionalFiles:
+  - SourcePath: ..\..\..\CSharpTypeScriptConverter\Data\TypeScriptConvertible.cs
+    DestinationDirectory: TypeScript
+  - SourcePath: ..\..\..\CSharpTypeScriptConverter\Data\TypeScriptFile.cs
+    DestinationDirectory: TypeScript

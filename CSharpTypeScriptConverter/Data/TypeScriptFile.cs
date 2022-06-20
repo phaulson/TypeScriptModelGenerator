@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace CSharpTypescriptConverter.Data;
 
-public class TypeScriptFile : TypeScriptConvertible
+internal class TypeScriptFile : TypeScriptConvertible
 {
     public List<string> PossibleImports { get; set; } = new();
     public string FullPath { get; set; } = null!;

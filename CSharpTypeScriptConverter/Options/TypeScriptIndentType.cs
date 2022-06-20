@@ -1,6 +1,6 @@
 ﻿namespace CSharpTypescriptConverter.Options;
 
-public enum IndentType
+public enum TypeScriptIndentType
 {
     TwoSpaces,
     FourSpaces,

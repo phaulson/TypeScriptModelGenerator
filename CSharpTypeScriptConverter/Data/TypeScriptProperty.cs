@@ -1,6 +1,6 @@
 ﻿namespace CSharpTypescriptConverter.Data;
 
-public class TypeScriptProperty : TypeScriptConvertible
+internal class TypeScriptProperty : TypeScriptConvertible
 {
     public string Type { get; set; } = null!;
     public bool Optional { get; set; }

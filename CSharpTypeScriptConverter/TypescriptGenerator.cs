@@ -6,6 +6,7 @@ using System.Linq;
 using CSharpTypescriptConverter.Data;
 using CSharpTypescriptConverter.Helper;
 using CSharpTypescriptConverter.Options;
+using CSharpTypescriptConverter.Parser;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -23,68 +24,93 @@ public class TypeScriptGenerator
         Generate(_options);
     }
 
+    public void Generate(string filePath)
+    {
+        var extension = DirectoryHelper.GetFileExtension(filePath);
+        var content = File.ReadAllText(filePath);
+
+        _options = extension switch
+        {
+            "yaml" or "yml" => OptionsParser.ParseYaml(content),
+            "json" => OptionsParser.ParseJson(content),
+            _ => throw new ArgumentException($"Unknown file extension: {extension}")
+        };
+        Generate(_options);
+    }
+
     public void Generate(TypeScriptGeneratorOptions options)
     {
         _options = options;
 
-        if (!_options.SourcePath.EndsWith("\\"))
+        if (!_options.SourceDirectory.EndsWith("\\"))
         {
-            _options.SourcePath += "\\";
+            _options.SourceDirectory += "\\";
         }
 
-        if (!_options.DestinationPath.EndsWith("\\"))
+        if (!_options.DestinationDirectory.EndsWith("\\"))
         {
-            _options.DestinationPath += "\\";
+            _options.DestinationDirectory += "\\";
         }
 
         var sw = new Stopwatch();
         sw.Start();
 
-        var sourceFiles = Directory.GetFiles(_options.SourcePath, "*.cs", SearchOption.AllDirectories);
-
+        var sourceFiles = Directory.GetFiles(_options.SourceDirectory, "*.cs", SearchOption.AllDirectories);
         foreach (var sourceFile in sourceFiles)
         {
-            var tree = CSharpSyntaxTree.ParseText(File.ReadAllText(sourceFile));
-            var root = (CompilationUnitSyntax) tree.GetRoot();
-            var tsFile = new TypeScriptFile
-            {
-                Ignored = AttributeHelper.IsIgnored(root.AttributeLists),
-                OriginalName = DirectoryHelper.GetFileName(sourceFile),
-                ReplacedName = AttributeHelper.GetTypescriptName(root.AttributeLists),
-                RelativePath = DirectoryHelper.GetMiddlePath(sourceFile, _options.SourcePath)
-            };
+            var tsFile = CreateFile(sourceFile, DirectoryHelper.GetMiddlePath(sourceFile, _options.SourceDirectory));
+            _tsFiles.Add(tsFile);
+        }
 
-            tsFile.FullPath = $"{_options.DestinationPath}{tsFile.RelativePath}";
-            if (!tsFile.FullPath.EndsWith("\\")) tsFile.FullPath = $"{tsFile.FullPath}\\";
-            tsFile.FullPath = $"{tsFile.FullPath}{tsFile.Name}.ts";
-            _currentTsFile = tsFile;
-                
-            foreach (var nameSpace in root.Members.Cast<BaseNamespaceDeclarationSyntax>())
-            {
-                foreach (var member in nameSpace.Members)
-                {
-                    TypeScriptConvertible tsClass = member switch
-                    {
-                        ClassDeclarationSyntax mClass => CreateInterface(mClass),
-                        EnumDeclarationSyntax mEnum => CreateEnum(mEnum),
-                        _ => throw new ArgumentException()
-                    };
-
-                    tsFile.Members.Add(tsClass);
-                }
-            }
-
+        foreach (var sourceFile in _options.AdditionalFiles)
+        {
+            var tsFile = CreateFile(sourceFile.SourcePath, sourceFile.DestinationDirectory ?? "");
             _tsFiles.Add(tsFile);
         }
 
         UpdateFiles();
-        DirectoryHelper.WriteToFile(_options.DestinationPath, _tsFiles
+        DirectoryHelper.WriteToFile(_options.DestinationDirectory, _tsFiles
             .Where(f => !f.Ignored && f.Members.Any()));
 
         Cleanup();
 
         sw.Stop();
         Console.WriteLine($"Time: {sw.ElapsedMilliseconds}ms = {sw.ElapsedMilliseconds / 1000}s");
+    }
+
+    private TypeScriptFile CreateFile(string sourceFile, string destinationPath)
+    {
+        var tree = CSharpSyntaxTree.ParseText(File.ReadAllText(sourceFile));
+        var root = (CompilationUnitSyntax) tree.GetRoot();
+        var tsFile = new TypeScriptFile
+        {
+            Ignored = AttributeParser.IsIgnored(root.AttributeLists),
+            OriginalName = DirectoryHelper.GetFileName(sourceFile),
+            ReplacedName = AttributeParser.GetTypescriptName(root.AttributeLists),
+            RelativePath = destinationPath
+        };
+
+        tsFile.FullPath = $"{_options.DestinationDirectory}{tsFile.RelativePath}";
+        if (!tsFile.FullPath.EndsWith("\\")) tsFile.FullPath = $"{tsFile.FullPath}\\";
+        tsFile.FullPath = $"{tsFile.FullPath}{tsFile.Name}.ts";
+        _currentTsFile = tsFile;
+                
+        foreach (var nameSpace in root.Members.Cast<BaseNamespaceDeclarationSyntax>())
+        {
+            foreach (var member in nameSpace.Members)
+            {
+                TypeScriptConvertible tsClass = member switch
+                {
+                    ClassDeclarationSyntax mClass => CreateInterface(mClass),
+                    EnumDeclarationSyntax mEnum => CreateEnum(mEnum),
+                    _ => throw new ArgumentException()
+                };
+
+                tsFile.Members.Add(tsClass);
+            }
+        }
+
+        return tsFile;
     }
 
     private TypeScriptInterface CreateInterface(TypeDeclarationSyntax syntax)
@@ -97,9 +123,9 @@ public class TypeScriptGenerator
             
         var tsInterface = new TypeScriptInterface
         {
-            Ignored = AttributeHelper.IsIgnored(syntax.AttributeLists),
+            Ignored = AttributeParser.IsIgnored(syntax.AttributeLists),
             OriginalName = syntax.Identifier.Text,
-            ReplacedName = AttributeHelper.GetTypescriptName(syntax.AttributeLists),
+            ReplacedName = AttributeParser.GetTypescriptName(syntax.AttributeLists),
             Indent = _options.Indent,
             Generics =
                 syntax.TypeParameterList?.Parameters.Select(p => p.Identifier.Text).ToList() ??
@@ -109,7 +135,7 @@ public class TypeScriptGenerator
 
         if (tsInterface.Ignored) return tsInterface;
             
-        foreach (var field in syntax.Members.Where(field => !AttributeHelper.IsIgnored(field.AttributeLists)))
+        foreach (var field in syntax.Members.Where(field => !AttributeParser.IsIgnored(field.AttributeLists)))
         {
             if (field is not PropertyDeclarationSyntax property) continue;
             tsInterface.Properties.Add(CreateProperty(property));
@@ -122,12 +148,12 @@ public class TypeScriptGenerator
     {
         var name = syntax.Identifier.Text;
         var accessors = syntax.AccessorList?.Accessors;
-        var typeInfo = new TypeHelper().ParseType(syntax.Type, _options);
+        var typeInfo = new TypeParser().ParseType(syntax.Type, _options);
             
         var property = new TypeScriptProperty
         {
             OriginalName = string.Concat(name[0].ToString().ToLower(), name.Substring(1)),
-            ReplacedName = AttributeHelper.GetTypescriptName(syntax.AttributeLists),
+            ReplacedName = AttributeParser.GetTypescriptName(syntax.AttributeLists),
             Readonly = (accessors?.All(a => a.Keyword.Text != "set") ?? true) 
                        || accessors.Value.Any(a => a.Modifiers.Any(m => m.Text == "private")),
             Type = typeInfo.Name,
@@ -145,7 +171,7 @@ public class TypeScriptGenerator
         var tsEnum = new TypeScriptEnum
         {
             OriginalName = syntax.Identifier.Text,
-            ReplacedName = AttributeHelper.GetTypescriptName(syntax.AttributeLists),
+            ReplacedName = AttributeParser.GetTypescriptName(syntax.AttributeLists),
             Indent = _options.Indent
         };
 

@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace CSharpTypescriptConverter.Data;
 
-public class TypeScriptEnum : TypeScriptConvertible
+internal class TypeScriptEnum : TypeScriptConvertible
 {
     public string Indent { get; set; } = null!;
     public Dictionary<string, int?> Fields { get; set; } = new();

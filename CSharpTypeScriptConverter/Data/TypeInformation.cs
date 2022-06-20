@@ -2,7 +2,7 @@
 
 namespace CSharpTypescriptConverter.Data;
 
-public class TypeInformation
+internal class TypeInformation
 {
     public string Name { get; set; } = null!;
     public bool Optional { get; set; }

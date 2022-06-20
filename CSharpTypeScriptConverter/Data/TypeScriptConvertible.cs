@@ -1,6 +1,6 @@
 ﻿namespace CSharpTypescriptConverter.Data;
 
-public abstract class TypeScriptConvertible
+internal abstract class TypeScriptConvertible
 {
     public bool Ignored { get; set; }
     public string OriginalName { get; set; } = null!;

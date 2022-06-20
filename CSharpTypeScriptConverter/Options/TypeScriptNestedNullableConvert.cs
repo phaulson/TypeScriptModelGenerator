@@ -1,6 +1,6 @@
 ﻿namespace CSharpTypescriptConverter.Options;
 
-public enum NestedNullableConvert
+public enum TypeScriptNestedNullableConvert
 {
     Null,
     Undefined

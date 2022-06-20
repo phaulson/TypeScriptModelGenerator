@@ -1,6 +1,6 @@
 ﻿namespace CSharpTypescriptConverter.Options;
 
-public enum NullableConvert
+public enum TypeScriptNullableConvert
 {
     Optional,
     Null,

@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace CSharpTypescriptConverter.Data;
 
-public class TypeScriptInterface : TypeScriptConvertible
+internal class TypeScriptInterface : TypeScriptConvertible
 {
     public string Indent { get; set; } = null!;
     public string? Base { get; set; }

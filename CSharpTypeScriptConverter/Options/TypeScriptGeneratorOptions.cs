@@ -1,20 +1,23 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 
 namespace CSharpTypescriptConverter.Options;
 
 public class TypeScriptGeneratorOptions
 {
-    public string SourcePath { get; set; } = null!;
-    public string DestinationPath { get; set; } = Directory.GetCurrentDirectory();
-    public IndentType IndentType { get; set; } = IndentType.TwoSpaces;
-    public NullableConvert NullableConvert { get; set; } = NullableConvert.Optional;
-    public NestedNullableConvert NestedNullableConvert { get; set; } = NestedNullableConvert.Null;
+    public string SourceDirectory { get; set; } = null!;
+    public string DestinationDirectory { get; set; } = Directory.GetCurrentDirectory();
+    public TypeScriptIndentType IndentType { get; set; } = TypeScriptIndentType.TwoSpaces;
+    public TypeScriptNullableConvert NullableConvert { get; set; } = TypeScriptNullableConvert.Optional;
+    public TypeScriptNestedNullableConvert NestedNullableConvert { get; set; } = TypeScriptNestedNullableConvert.Null;
+    public TypeScriptDateConvert DateConvert { get; set; } = TypeScriptDateConvert.Date;
+    public List<AdditionalFile> AdditionalFiles { get; set; } = new();
 
     public string Indent => IndentType switch
     {
-        IndentType.Tab => "\t",
-        IndentType.FourSpaces => "    ",
-        IndentType.TwoSpaces => "  ",
+        TypeScriptIndentType.Tab => "\t",
+        TypeScriptIndentType.FourSpaces => "    ",
+        TypeScriptIndentType.TwoSpaces => "  ",
         _ => ""
     };
 }
