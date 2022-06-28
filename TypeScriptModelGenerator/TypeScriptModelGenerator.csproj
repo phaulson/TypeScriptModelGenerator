@@ -4,6 +4,11 @@
         <TargetFramework>net6.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <Title>TypeScriptModelGenerator</Title>
+        <Authors>Paul Mühlbacher</Authors>
+        <Description>Generates TypeScript interfaces from C# data classes</Description>
+        <RepositoryType></RepositoryType>
+        <RepositoryUrl>https://github.com/phaulson/TypeScriptModelGenerator</RepositoryUrl>
     </PropertyGroup>
 
     <ItemGroup>
