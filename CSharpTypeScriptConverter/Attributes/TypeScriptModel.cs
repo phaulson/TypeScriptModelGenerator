@@ -6,6 +6,6 @@ namespace CSharpTypeScriptConverter.Attributes;
     Inherited = false, AllowMultiple = true)]
 public class TypeScriptModel : Attribute
 {
-    public string? Name;
     public bool Ignored;
+    public string? Name;
 }

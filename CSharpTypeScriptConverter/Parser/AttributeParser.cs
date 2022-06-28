@@ -22,7 +22,7 @@ internal static class AttributeParser
             .FirstOrDefault(attrList => attrList.Attributes.Any(attr => attr.Name.ToString() == "TypeScriptModel"))
             ?.Attributes.FirstOrDefault()?.ArgumentList?.Arguments
             .FirstOrDefault(arg => arg.NameEquals?.Name.Identifier.Text == "Name")?.Expression.ToString().Trim('"');
-        
+
         return !string.IsNullOrWhiteSpace(name) ? name : null;
     }
 }

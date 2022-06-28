@@ -20,8 +20,9 @@ internal static class DirectoryHelper
 
     public static string GetFileName(string filePath)
     {
-        var startingIndex = filePath.LastIndexOf("\\", StringComparison.Ordinal) != -1 ? 
-            filePath.LastIndexOf("\\", StringComparison.Ordinal) : 0;
+        var startingIndex = filePath.LastIndexOf("\\", StringComparison.Ordinal) != -1
+            ? filePath.LastIndexOf("\\", StringComparison.Ordinal)
+            : 0;
         return filePath.Substring(startingIndex, filePath.LastIndexOf(".", StringComparison.Ordinal) - startingIndex)
             .Replace("\\", "");
     }
@@ -35,12 +36,13 @@ internal static class DirectoryHelper
     {
         var path1 = srcPath.Split(new[] {"\\"}, StringSplitOptions.RemoveEmptyEntries).ToList();
         var path2 = destPath.Split(new[] {"\\"}, StringSplitOptions.RemoveEmptyEntries).ToList();
-            
+
         var removedPath = "";
         var newPath = "";
-        while(path1.Any() && path2.Any()) 
+        while (path1.Any() && path2.Any())
         {
-            if (path1[0] != path2[0]) {
+            if (path1[0] != path2[0])
+            {
                 newPath += "../";
                 removedPath += $"{path2[0]}/";
             }
@@ -48,6 +50,7 @@ internal static class DirectoryHelper
             path1.RemoveAt(0);
             path2.RemoveAt(0);
         }
+
         newPath += string.Join("", path1.Select(_ => "../"));
         if (!newPath.StartsWith(".")) newPath = $"./{newPath}";
 

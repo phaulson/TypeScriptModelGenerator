@@ -12,7 +12,7 @@ internal static class Program
             .WithDestinationDirectory(@"..\..\Output\")
             .WithIndentType(TypeScriptIndentType.TwoSpaces)
             .WithDateConvert(TypeScriptDateConvert.Date);
-            
+
         generator.Generate();
     }
 }

@@ -14,14 +14,13 @@ namespace CSharpTypeScriptConverter.Generator;
 public class TypeScriptGenerator : ITypeScriptGenerator
 {
     private readonly TypeScriptGeneratorOptions _options = new();
-    private List<TypeScriptFile> _tsFiles = new();
     private TypeScriptFile _currentTsFile = new();
+    private List<TypeScriptFile> _tsFiles = new();
 
     public TypeScriptGenerator()
     {
-        
     }
-    
+
     public TypeScriptGenerator(TypeScriptGeneratorOptions options)
     {
         _options = options;
@@ -57,19 +56,19 @@ public class TypeScriptGenerator : ITypeScriptGenerator
         _options.IndentType = indentType;
         return this;
     }
-    
+
     public ITypeScriptGenerator WithNullableConvert(TypeScriptNullableConvert convert)
     {
         _options.NullableConvert = convert;
         return this;
     }
-    
+
     public ITypeScriptGenerator WithNestedNullableConvert(TypeScriptNestedNullableConvert convert)
     {
         _options.NestedNullableConvert = convert;
         return this;
     }
-    
+
     public ITypeScriptGenerator WithDateConvert(TypeScriptDateConvert convert)
     {
         _options.DateConvert = convert;
@@ -81,7 +80,7 @@ public class TypeScriptGenerator : ITypeScriptGenerator
         _options.AdditionalFiles = files;
         return this;
     }
-    
+
     public ITypeScriptGenerator AddAdditionalFile(AdditionalFile file)
     {
         _options.AdditionalFiles.Add(file);
@@ -90,16 +89,10 @@ public class TypeScriptGenerator : ITypeScriptGenerator
 
     public void Generate()
     {
-        if (!_options.SourceDirectory.EndsWith("\\"))
-        {
-            _options.SourceDirectory += "\\";
-        }
+        if (!_options.SourceDirectory.EndsWith("\\")) _options.SourceDirectory += "\\";
 
-        if (!_options.DestinationDirectory.EndsWith("\\"))
-        {
-            _options.DestinationDirectory += "\\";
-        }
-        
+        if (!_options.DestinationDirectory.EndsWith("\\")) _options.DestinationDirectory += "\\";
+
         var sourceFiles = Directory.GetFiles(_options.SourceDirectory, "*.cs", SearchOption.AllDirectories);
         foreach (var sourceFile in sourceFiles)
         {
@@ -136,20 +129,18 @@ public class TypeScriptGenerator : ITypeScriptGenerator
         if (!tsFile.FullPath.EndsWith("\\")) tsFile.FullPath = $"{tsFile.FullPath}\\";
         tsFile.FullPath = $"{tsFile.FullPath}{tsFile.Name}.ts";
         _currentTsFile = tsFile;
-                
-        foreach (var nameSpace in root.Members.Cast<BaseNamespaceDeclarationSyntax>())
-        {
-            foreach (var member in nameSpace.Members)
-            {
-                TypeScriptConvertible tsClass = member switch
-                {
-                    ClassDeclarationSyntax mClass => CreateInterface(mClass),
-                    EnumDeclarationSyntax mEnum => CreateEnum(mEnum),
-                    _ => throw new ArgumentException()
-                };
 
-                tsFile.Members.Add(tsClass);
-            }
+        foreach (var nameSpace in root.Members.Cast<BaseNamespaceDeclarationSyntax>())
+        foreach (var member in nameSpace.Members)
+        {
+            TypeScriptConvertible tsClass = member switch
+            {
+                ClassDeclarationSyntax mClass => CreateInterface(mClass),
+                EnumDeclarationSyntax mEnum => CreateEnum(mEnum),
+                _ => throw new ArgumentException()
+            };
+
+            tsFile.Members.Add(tsClass);
         }
 
         return tsFile;
@@ -159,16 +150,16 @@ public class TypeScriptGenerator : ITypeScriptGenerator
     {
         var baseTypeSyntax = syntax.BaseList?.Types.FirstOrDefault()?.Type;
         string? baseType = null;
-        
+
         if (baseTypeSyntax is not null)
         {
             var typeInfo = new TypeParser().ParseType(baseTypeSyntax, _options);
             baseType = typeInfo.Name;
-            
+
             _currentTsFile.PossibleImports.AddRange(typeInfo.PossibleImports);
             _currentTsFile.PossibleImports = _currentTsFile.PossibleImports.Distinct().ToList();
         }
-            
+
         var tsInterface = new TypeScriptInterface
         {
             Ignored = AttributeParser.IsIgnored(syntax.AttributeLists),
@@ -182,7 +173,7 @@ public class TypeScriptGenerator : ITypeScriptGenerator
         };
 
         if (tsInterface.Ignored) return tsInterface;
-            
+
         foreach (var field in syntax.Members.Where(field => !AttributeParser.IsIgnored(field.AttributeLists)))
         {
             if (field is not PropertyDeclarationSyntax property) continue;
@@ -191,26 +182,26 @@ public class TypeScriptGenerator : ITypeScriptGenerator
 
         return tsInterface;
     }
-        
+
     private TypeScriptProperty CreateProperty(PropertyDeclarationSyntax syntax)
     {
         var name = syntax.Identifier.Text;
         var accessors = syntax.AccessorList?.Accessors;
         var typeInfo = new TypeParser().ParseType(syntax.Type, _options);
-            
+
         var property = new TypeScriptProperty
         {
             OriginalName = string.Concat(name[0].ToString().ToLower(), name.Substring(1)),
             ReplacedName = AttributeParser.GetTypescriptName(syntax.AttributeLists),
-            Readonly = (accessors?.All(a => a.Keyword.Text != "set") ?? true) 
+            Readonly = (accessors?.All(a => a.Keyword.Text != "set") ?? true)
                        || accessors.Value.Any(a => a.Modifiers.Any(m => m.Text == "private")),
             Type = typeInfo.Name,
             Optional = typeInfo.Optional
         };
-            
+
         _currentTsFile.PossibleImports.AddRange(typeInfo.PossibleImports);
         _currentTsFile.PossibleImports = _currentTsFile.PossibleImports.Distinct().ToList();
-            
+
         return property;
     }
 
@@ -243,16 +234,12 @@ public class TypeScriptGenerator : ITypeScriptGenerator
                 if (member is not TypeScriptInterface tsInterface) return;
 
                 if (tsInterface.Base is not null)
-                {
                     tsInterface.Base = members.FirstOrDefault(c => c.OriginalName == tsInterface.Base)?.Name ??
                                        tsInterface.Base;
-                }
 
                 foreach (var property in tsInterface.Properties)
-                {
                     property.Type = members.FirstOrDefault(c => c.OriginalName == property.Type)?.Name ??
                                     property.Type;
-                }
             }
 
             foreach (var possibleImport in tsFile.PossibleImports.Where(possibleImport =>
@@ -270,13 +257,9 @@ public class TypeScriptGenerator : ITypeScriptGenerator
 
                 if (tsFile.Imports.ContainsKey(importPath) &&
                     !tsFile.Imports[importPath].Contains(actualImport))
-                {
                     tsFile.Imports[importPath].Add(actualImport);
-                }
                 else
-                {
                     tsFile.Imports.Add(importPath, new List<string> {actualImport});
-                }
             }
         }
     }
