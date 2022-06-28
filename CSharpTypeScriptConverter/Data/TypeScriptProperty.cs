@@ -1,4 +1,4 @@
-﻿namespace CSharpTypescriptConverter.Data;
+﻿namespace CSharpTypeScriptConverter.Data;
 
 internal class TypeScriptProperty : TypeScriptConvertible
 {

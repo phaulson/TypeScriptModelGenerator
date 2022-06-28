@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using CSharpTypescriptConverter.Data;
+using CSharpTypeScriptConverter.Data;
 
-namespace CSharpTypescriptConverter.Helper;
+namespace CSharpTypeScriptConverter.Helper;
 
 internal static class DirectoryHelper
 {

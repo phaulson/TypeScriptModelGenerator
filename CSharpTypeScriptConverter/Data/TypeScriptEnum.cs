@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace CSharpTypescriptConverter.Data;
+namespace CSharpTypeScriptConverter.Data;
 
 internal class TypeScriptEnum : TypeScriptConvertible
 {

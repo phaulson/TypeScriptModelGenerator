@@ -1,6 +1,5 @@
-﻿using System.Collections.Generic;
-using CSharpTypescriptConverter;
-using CSharpTypescriptConverter.Options;
+﻿using CSharpTypeScriptConverter.Generator;
+using CSharpTypeScriptConverter.Options;
 
 namespace CSharpTypeScriptConverterConsoleApplication
 {
@@ -8,22 +7,13 @@ namespace CSharpTypeScriptConverterConsoleApplication
     {
         public static void Main(string[] args)
         {
-            // new TypeScriptGenerator().Generate(options =>
-            // {
-            //     options.IndentType = TypeScriptIndentType.TwoSpaces;
-            //     options.SourceDirectory = @"..\..\Input";
-            //     options.DestinationDirectory = @"..\..\Output\";
-            //     options.AdditionalFiles = new List<AdditionalFile>
-            //     {
-            //         new()
-            //         {
-            //             SourceDirectory = @"..\..\..\CSharpTypeScriptConverter\Data\TypeScriptConvertible.cs",
-            //             DestinationDirectory = "TypeScript"
-            //         }
-            //     };
-            // });
+            var generator = new TypeScriptGenerator()
+                .WithSourceDirectory(@"..\..\Input")
+                .WithDestinationDirectory(@"..\..\Output\")
+                .WithIndentType(TypeScriptIndentType.TwoSpaces)
+                .WithDateConvert(TypeScriptDateConvert.Date);
             
-            new TypeScriptGenerator().Generate(@"..\..\Config\config.json");
+            generator.Generate();
         }
     }
 }

@@ -1,10 +1,10 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
-using CSharpTypescriptConverter.Options;
+using CSharpTypeScriptConverter.Options;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
-namespace CSharpTypescriptConverter.Parser;
+namespace CSharpTypeScriptConverter.Parser;
 
 internal static class OptionsParser
 {

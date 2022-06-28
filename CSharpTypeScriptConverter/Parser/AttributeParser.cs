@@ -2,7 +2,7 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace CSharpTypescriptConverter.Parser;
+namespace CSharpTypeScriptConverter.Parser;
 
 internal static class AttributeParser
 {

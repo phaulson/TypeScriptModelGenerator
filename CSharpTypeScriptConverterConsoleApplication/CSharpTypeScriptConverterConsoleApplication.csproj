@@ -41,6 +41,8 @@
         <Reference Include="System.Xml" />
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="Input\Base\BaseEntity.cs" />
+        <Compile Include="Input\Role.cs" />
         <Compile Include="Input\User.cs" />
         <Compile Include="Program.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />

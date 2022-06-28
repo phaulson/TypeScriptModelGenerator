@@ -8,7 +8,7 @@
         <ProjectGuid>{10C5BB83-C1F4-4201-88BD-DE505279D45D}</ProjectGuid>
         <OutputType>Library</OutputType>
         <AppDesignerFolder>Properties</AppDesignerFolder>
-        <RootNamespace>CSharpTypescriptConverter</RootNamespace>
+        <RootNamespace>CSharpTypeScriptConverter</RootNamespace>
         <AssemblyName>CSharpTypeScriptConverter</AssemblyName>
         <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
         <FileAlignment>512</FileAlignment>
@@ -45,6 +45,10 @@
         </Reference>
         <Reference Include="Microsoft.CodeAnalysis.CSharp, Version=4.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35">
           <HintPath>..\packages\Microsoft.CodeAnalysis.CSharp.4.1.0-1.final\lib\netstandard2.0\Microsoft.CodeAnalysis.CSharp.dll</HintPath>
+          <Private>True</Private>
+        </Reference>
+        <Reference Include="Microsoft.Extensions.DependencyInjection.Abstractions, Version=7.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60">
+          <HintPath>..\packages\Microsoft.Extensions.DependencyInjection.Abstractions.7.0.0-preview.5.22301.12\lib\net462\Microsoft.Extensions.DependencyInjection.Abstractions.dll</HintPath>
           <Private>True</Private>
         </Reference>
         <Reference Include="mscorlib" />
@@ -102,6 +106,9 @@
     <ItemGroup>
         <Compile Include="Attributes\TypeScriptModel.cs" />
         <Compile Include="Data\TypeInformation.cs" />
+        <Compile Include="Extensions\ServiceExtensions.cs" />
+        <Compile Include="Generator\ITypeScriptGenerator.cs" />
+        <Compile Include="Generator\TypeScriptGenerator.cs" />
         <Compile Include="Helper\DirectoryHelper.cs" />
         <Compile Include="Parser\AttributeParser.cs" />
         <Compile Include="Parser\TypeParser.cs" />
@@ -109,7 +116,6 @@
         <Compile Include="Options\AdditionalFile.cs" />
         <Compile Include="Options\TypeScriptDateConvert.cs" />
         <Compile Include="Options\TypeScriptGeneratorOptions.cs" />
-        <Compile Include="TypescriptGenerator.cs" />
         <Compile Include="Options\TypeScriptIndentType.cs" />
         <Compile Include="Options\TypeScriptNestedNullableConvert.cs" />
         <Compile Include="Options\TypeScriptNullableConvert.cs" />

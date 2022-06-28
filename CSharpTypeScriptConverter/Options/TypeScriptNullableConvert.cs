@@ -1,4 +1,4 @@
-﻿namespace CSharpTypescriptConverter.Options;
+﻿namespace CSharpTypeScriptConverter.Options;
 
 public enum TypeScriptNullableConvert
 {

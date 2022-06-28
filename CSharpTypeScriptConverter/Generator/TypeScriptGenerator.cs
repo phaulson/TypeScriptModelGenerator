@@ -3,28 +3,32 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using CSharpTypescriptConverter.Data;
-using CSharpTypescriptConverter.Helper;
-using CSharpTypescriptConverter.Options;
-using CSharpTypescriptConverter.Parser;
+using CSharpTypeScriptConverter.Data;
+using CSharpTypeScriptConverter.Helper;
+using CSharpTypeScriptConverter.Options;
+using CSharpTypeScriptConverter.Parser;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace CSharpTypescriptConverter;
+namespace CSharpTypeScriptConverter.Generator;
 
-public class TypeScriptGenerator
+public class TypeScriptGenerator : ITypeScriptGenerator
 {
-    private TypeScriptGeneratorOptions _options = new();
+    private readonly TypeScriptGeneratorOptions _options = new();
     private List<TypeScriptFile> _tsFiles = new();
     private TypeScriptFile _currentTsFile = new();
 
-    public void Generate(Action<TypeScriptGeneratorOptions> configure)
+    public TypeScriptGenerator()
     {
-        configure(_options);
-        Generate(_options);
+        
+    }
+    
+    public TypeScriptGenerator(TypeScriptGeneratorOptions options)
+    {
+        _options = options;
     }
 
-    public void Generate(string filePath)
+    public TypeScriptGenerator(string filePath)
     {
         var extension = DirectoryHelper.GetFileExtension(filePath);
         var content = File.ReadAllText(filePath);
@@ -35,13 +39,58 @@ public class TypeScriptGenerator
             "json" => OptionsParser.ParseJson(content),
             _ => throw new ArgumentException($"Unknown file extension: {extension}")
         };
-        Generate(_options);
     }
 
-    public void Generate(TypeScriptGeneratorOptions options)
+    public ITypeScriptGenerator WithSourceDirectory(string sourceDirectory)
     {
-        _options = options;
+        _options.SourceDirectory = sourceDirectory;
+        return this;
+    }
 
+    public ITypeScriptGenerator WithDestinationDirectory(string destinationDirectory)
+    {
+        _options.DestinationDirectory = destinationDirectory;
+        return this;
+    }
+
+    public ITypeScriptGenerator WithIndentType(TypeScriptIndentType indentType)
+    {
+        _options.IndentType = indentType;
+        return this;
+    }
+    
+    public ITypeScriptGenerator WithNullableConvert(TypeScriptNullableConvert convert)
+    {
+        _options.NullableConvert = convert;
+        return this;
+    }
+    
+    public ITypeScriptGenerator WithNestedNullableConvert(TypeScriptNestedNullableConvert convert)
+    {
+        _options.NestedNullableConvert = convert;
+        return this;
+    }
+    
+    public ITypeScriptGenerator WithDateConvert(TypeScriptDateConvert convert)
+    {
+        _options.DateConvert = convert;
+        return this;
+    }
+
+    public ITypeScriptGenerator WithAdditionalFiles(IList<AdditionalFile> files)
+    {
+        _options.AdditionalFiles = files;
+        return this;
+    }
+    
+    public ITypeScriptGenerator AddAdditionalFile(AdditionalFile file)
+    {
+        _options.AdditionalFiles.Add(file);
+        return this;
+    }
+
+    public void Generate()
+    {
         if (!_options.SourceDirectory.EndsWith("\\"))
         {
             _options.SourceDirectory += "\\";
@@ -115,10 +164,16 @@ public class TypeScriptGenerator
 
     private TypeScriptInterface CreateInterface(TypeDeclarationSyntax syntax)
     {
-        var baseType = (syntax.BaseList?.Types.FirstOrDefault()?.Type as IdentifierNameSyntax)?.Identifier.Text;
-        if (baseType is not null && !_currentTsFile.PossibleImports.Contains(baseType))
+        var baseTypeSyntax = syntax.BaseList?.Types.FirstOrDefault()?.Type;
+        string? baseType = null;
+        
+        if (baseTypeSyntax is not null)
         {
-            _currentTsFile.PossibleImports.Add(baseType);
+            var typeInfo = new TypeParser().ParseType(baseTypeSyntax, _options);
+            baseType = typeInfo.Name;
+            
+            _currentTsFile.PossibleImports.AddRange(typeInfo.PossibleImports);
+            _currentTsFile.PossibleImports = _currentTsFile.PossibleImports.Distinct().ToList();
         }
             
         var tsInterface = new TypeScriptInterface
@@ -235,7 +290,6 @@ public class TypeScriptGenerator
 
     private void Cleanup()
     {
-        _options = new TypeScriptGeneratorOptions();
         _tsFiles = new List<TypeScriptFile>();
         _currentTsFile = new TypeScriptFile();
     }

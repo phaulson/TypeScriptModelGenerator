@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace CSharpTypescriptConverter.Data;
+namespace CSharpTypeScriptConverter.Data;
 
 internal class TypeInformation
 {

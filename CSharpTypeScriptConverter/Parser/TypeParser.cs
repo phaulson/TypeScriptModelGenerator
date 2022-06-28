@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using CSharpTypescriptConverter.Data;
-using CSharpTypescriptConverter.Options;
+using CSharpTypeScriptConverter.Data;
+using CSharpTypeScriptConverter.Options;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace CSharpTypescriptConverter.Parser;
+namespace CSharpTypeScriptConverter.Parser;
 
 internal class TypeParser
 {

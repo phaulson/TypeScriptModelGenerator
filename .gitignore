@@ -2,6 +2,3 @@
 packages/
 bin/
 obj/
-
-CSharpTypeScriptConverterConsoleApplication/Output/*
-!CSharpTypeScriptConverterConsoleApplication/Output/.gitkeep
