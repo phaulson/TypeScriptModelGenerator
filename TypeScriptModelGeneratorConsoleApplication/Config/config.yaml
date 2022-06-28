@@ -1,0 +1,4 @@
+﻿SourceDirectory: ..\..\..\Input
+DestinationDirectory: ..\..\..\Output
+IndentType: TwoSpaces
+DateConvert: Date

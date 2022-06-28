@@ -1,3 +1,3 @@
-﻿# CSharpTypeScriptConverter
+﻿# TypeScriptModelGenerator
 
-Converts C# classes to TypeScript interfaces.
+Generates TypeScript interfaces from C# data classes
