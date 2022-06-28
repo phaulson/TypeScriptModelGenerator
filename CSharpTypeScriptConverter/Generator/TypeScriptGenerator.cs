@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using CSharpTypeScriptConverter.Data;
@@ -100,10 +99,7 @@ public class TypeScriptGenerator : ITypeScriptGenerator
         {
             _options.DestinationDirectory += "\\";
         }
-
-        var sw = new Stopwatch();
-        sw.Start();
-
+        
         var sourceFiles = Directory.GetFiles(_options.SourceDirectory, "*.cs", SearchOption.AllDirectories);
         foreach (var sourceFile in sourceFiles)
         {
@@ -122,9 +118,6 @@ public class TypeScriptGenerator : ITypeScriptGenerator
             .Where(f => !f.Ignored && f.Members.Any()));
 
         Cleanup();
-
-        sw.Stop();
-        Console.WriteLine($"Time: {sw.ElapsedMilliseconds}ms = {sw.ElapsedMilliseconds / 1000}s");
     }
 
     private TypeScriptFile CreateFile(string sourceFile, string destinationPath)
