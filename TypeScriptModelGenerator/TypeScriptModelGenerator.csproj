@@ -7,8 +7,8 @@
         <Title>TypeScriptModelGenerator</Title>
         <Authors>Paul Mühlbacher</Authors>
         <Description>Generates TypeScript interfaces from C# data classes</Description>
-        <RepositoryType></RepositoryType>
-        <RepositoryUrl>https://github.com/phaulson/TypeScriptModelGenerator</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <RepositoryUrl>https://github.com/phaulson/TypeScriptModelGenerator.git</RepositoryUrl>
     </PropertyGroup>
 
     <ItemGroup>
